@@ -6,26 +6,37 @@ on:
       - main
 
 jobs:
-  build:
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@master
         with:
-          python-version: "3.11"
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
 
-      - name: Install Dependencies
-        run: |
-          pip install -r requirements.txt
+          script: |
+            cd /home/ubuntu
 
-      - name: Run Basic Check
-        run: |
-          python -m py_compile app.py
+            if [ ! -d "flask-cicd-project" ]; then
+              git clone https://github.com/AlekyaGujjala12/flask-cicd-project.git
+            fi
 
-      - name: Build Docker Image
-        run: |
-          docker build -t flask-cicd .
+            cd flask-cicd-project
+
+            git pull origin main
+
+            sudo docker stop flask-app || true
+            sudo docker rm flask-app || true
+
+            sudo docker build -t flask-cicd .
+
+            sudo docker run -d \
+              --name flask-app \
+              -p 5000:5000 \
+              flask-cicd
