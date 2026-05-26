@@ -1,4 +1,4 @@
-This the  sample project that implements ony CI (continous integration).
+This is a sample project that implements ony CI (continous integration).
 
 Prior knowledge needed :(Basics are fine)
 Python
